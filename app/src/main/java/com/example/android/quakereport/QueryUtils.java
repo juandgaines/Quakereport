@@ -19,6 +19,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Helper methods related to requesting and receiving earthquake data from USGS.
@@ -38,7 +39,7 @@ public final class QueryUtils {
      */
     private QueryUtils() {
     }
-    public static ArrayList<Earthquake> fetchEarthquakeData(String requestUrl) {
+    public static List<Earthquake> fetchEarthquakeData(String requestUrl) {
         // Create URL object
         URL url = createUrl(requestUrl);
 
@@ -51,7 +52,7 @@ public final class QueryUtils {
         }
 
         // Extract relevant fields from the JSON response and create an {@link Event} object
-        ArrayList<Earthquake> earthquake = extractEarthquakes(jsonResponse);
+        List<Earthquake> earthquake = extractEarthquakes(jsonResponse);
 
         // Return the {@link Event}
         return earthquake;
@@ -131,7 +132,7 @@ public final class QueryUtils {
      * Return a list of {@link Earthquake} objects that has been built up from
      * parsing a JSON response.
      */
-    public static ArrayList<Earthquake> extractEarthquakes(String jsonResponse) {
+    public static List<Earthquake> extractEarthquakes(String jsonResponse) {
 
         // Create an empty ArrayList that we can start adding earthquakes to
         ArrayList<Earthquake> earthquakes = new ArrayList<>();

@@ -15,23 +15,30 @@
  */
 package com.example.android.quakereport;
 
+import android.app.LoaderManager;
 import android.content.Intent;
+import android.content.Loader;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class EarthquakeActivity extends AppCompatActivity {
+public class EarthquakeActivity extends AppCompatActivity
+        implements LoaderManager.LoaderCallbacks<List<Earthquake>> {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
-    private static final String USGS_REQUEST_URL="https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=5&limit=10";
-    private ArrayList<Earthquake> earthquakes= new ArrayList<>();
+    private static final String USGS_REQUEST_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=5&limit=10";
+
+    private static final int EARTHQUAKE_LOADER_ID = 1;
+    private ArrayList<Earthquake> earthquakes = new ArrayList<>();
     private EarthquakeAdapter adapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,23 +46,12 @@ public class EarthquakeActivity extends AppCompatActivity {
         setContentView(R.layout.earthquake_activity);
 
         // Create a fake list of earthquake locations.
-      adapter = new EarthquakeAdapter(
+        adapter = new EarthquakeAdapter(
                 this, R.layout.list_item, earthquakes);
-        /*
 
-        earthquakes.add(new Earthquake("7.2" ,"San Francisco", "Feb 2, 2016"));
-        earthquakes.add(new Earthquake("6.1" ,"London","July 20, 2015"));
-        earthquakes.add(new Earthquake("3.9" ,"Tokyo","Nov 10, 2014"));
-        earthquakes.add(new Earthquake("5.4" ,"Mexico City","May 3, 2014"));
-        earthquakes.add(new Earthquake("2.8" ,"Moscow","Jan 31, 2013"));
-        earthquakes.add(new Earthquake("4.9" ,"Rio de Janeiro", "Aug 19, 2012"));
-        earthquakes.add(new Earthquake("1.6", "Paris","Oct 30, 2011"));*/
 
-        EarthquakeAsyncTask mTaskMain= new EarthquakeAsyncTask();
-        mTaskMain.execute(USGS_REQUEST_URL);
         // Find a reference to the {@link ListView} in the layout
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
-
 
 
         earthquakeListView.setAdapter(adapter);
@@ -65,49 +61,41 @@ public class EarthquakeActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
                 Earthquake current = adapter.getItem(position);
-                String url= current.getmUrl();
-                Intent intent =new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                String url = current.getmUrl();
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                 startActivity(intent);
             }
         });
 
 
-        // Create a new {@link ArrayAdapter} of earthquakes
-
-
-        // Set the adapter on the {@link ListView}
-        // so the list can be populated in the user interface
+        LoaderManager loaderManager = getLoaderManager();
+        loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+        Log.v("LoaderState", "initLoader launched");
 
     }
-    private class EarthquakeAsyncTask extends AsyncTask<String,Void,ArrayList<Earthquake>>{
 
+    @Override
+    public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
+        Log.v("LoaderState", "onCreateLoader launched");
+        return new EarthquakeLoader(this, USGS_REQUEST_URL);
+    }
 
-        @Override
-        protected ArrayList<Earthquake> doInBackground(String... urls) {
-            if (urls.length < 1 || urls[0] == null) {
-                return null;
-            }
-            ArrayList<Earthquake> mEvent= QueryUtils.fetchEarthquakeData(urls[0]);
-            return mEvent;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<Earthquake> event) {
-            super.onPostExecute(event);
-            adapter.clear();
-            if (event== null || event.isEmpty()) {
-                return;
-            }
-            else{
-                earthquakes.addAll(event);
-            }
-
-            adapter.notifyDataSetChanged();
-
-
-
-
-
+    @Override
+    public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
+        adapter.clear();
+        Log.v("LoaderState", "onLoadFinished launched");
+        // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
+        // data set. This will trigger the ListView to update.
+        if (earthquakes != null && !earthquakes.isEmpty()) {
+            adapter.addAll(earthquakes);
         }
     }
+
+    @Override
+    public void onLoaderReset(Loader<List<Earthquake>> loader) {
+        Log.v("LoaderState", "onLoaderReset launched");
+        adapter.clear();
+    }
+
+
 }
