@@ -16,8 +16,11 @@
 package com.example.android.quakereport;
 
 import android.app.LoaderManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -44,12 +47,17 @@ public class EarthquakeActivity extends AppCompatActivity
     private TextView mEmptyStateTextView;
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
+// check for network connection
+        ConnectivityManager cm =
+                (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
         // Create a fake list of earthquake locations.
         adapter = new EarthquakeAdapter(
                 this, R.layout.list_item, earthquakes);
@@ -75,17 +83,24 @@ public class EarthquakeActivity extends AppCompatActivity
             }
         });
 
-
-        LoaderManager loaderManager = getLoaderManager();
-        loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
-        Log.v("LoaderState", "initLoader launched");
-
+    if(isConnected) {
+    LoaderManager loaderManager = getLoaderManager();
+    loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+    Log.v("LoaderState", "initLoader launched");
+    }
+    else{
+        ProgressBar mProgressBar= (ProgressBar) findViewById(R.id.loading_spinner);
+        mProgressBar.setVisibility(View.GONE);
+        mEmptyStateTextView.setText(R.string.no_internet);
+    }
     }
 
     @Override
     public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
         Log.v("LoaderState", "onCreateLoader launched");
-        return new EarthquakeLoader(this, USGS_REQUEST_URL);
+
+            return new EarthquakeLoader(this, USGS_REQUEST_URL);
+
     }
 
     @Override
@@ -101,6 +116,8 @@ public class EarthquakeActivity extends AppCompatActivity
             adapter.addAll(earthquakes);
 
         }
+
+
 
     }
 
