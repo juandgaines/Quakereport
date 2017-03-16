@@ -41,6 +41,13 @@ public final class QueryUtils {
     }
     public static List<Earthquake> fetchEarthquakeData(String requestUrl) {
         // Create URL object
+
+        try{
+            Thread.sleep(2000);
+        }
+        catch (InterruptedException e){
+            e.printStackTrace();
+        }
         URL url = createUrl(requestUrl);
 
         // Perform HTTP request to the URL and receive a JSON response back

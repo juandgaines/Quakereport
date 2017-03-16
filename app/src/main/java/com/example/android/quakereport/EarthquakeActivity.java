@@ -25,6 +25,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class EarthquakeActivity extends AppCompatActivity
     private TextView mEmptyStateTextView;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,6 +58,7 @@ public class EarthquakeActivity extends AppCompatActivity
         // Find a reference to the {@link ListView} in the layout
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
         mEmptyStateTextView=(TextView) findViewById(R.id.empty_view);
+
 
         earthquakeListView.setEmptyView(mEmptyStateTextView);
 
@@ -88,14 +91,17 @@ public class EarthquakeActivity extends AppCompatActivity
     @Override
     public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
         mEmptyStateTextView.setText(R.string.no_earthquakes);
-
+        ProgressBar mProgressBar= (ProgressBar) findViewById(R.id.loading_spinner);
+        mProgressBar.setVisibility(View.GONE);
         adapter.clear();
         Log.v("LoaderState", "onLoadFinished launched");
         // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
         // data set. This will trigger the ListView to update.
         if (earthquakes != null && !earthquakes.isEmpty()) {
             adapter.addAll(earthquakes);
+
         }
+
     }
 
     @Override
