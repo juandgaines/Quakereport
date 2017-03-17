@@ -19,12 +19,16 @@ import android.app.LoaderManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -38,8 +42,7 @@ public class EarthquakeActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<List<Earthquake>> {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
-    private static final String USGS_REQUEST_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&eventtype=earthquake&orderby=time&minmag=5&limit=10";
-
+    private static final String USGS_REQUEST_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query";
     private static final int EARTHQUAKE_LOADER_ID = 1;
     private ArrayList<Earthquake> earthquakes = new ArrayList<>();
     private EarthquakeAdapter adapter;
@@ -53,7 +56,7 @@ public class EarthquakeActivity extends AppCompatActivity
         setContentView(R.layout.earthquake_activity);
 // check for network connection
         ConnectivityManager cm =
-                (ConnectivityManager)this.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean isConnected = activeNetwork != null &&
@@ -65,7 +68,7 @@ public class EarthquakeActivity extends AppCompatActivity
 
         // Find a reference to the {@link ListView} in the layout
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
-        mEmptyStateTextView=(TextView) findViewById(R.id.empty_view);
+        mEmptyStateTextView = (TextView) findViewById(R.id.empty_view);
 
 
         earthquakeListView.setEmptyView(mEmptyStateTextView);
@@ -83,30 +86,40 @@ public class EarthquakeActivity extends AppCompatActivity
             }
         });
 
-    if(isConnected) {
-    LoaderManager loaderManager = getLoaderManager();
-    loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
-    Log.v("LoaderState", "initLoader launched");
-    }
-    else{
-        ProgressBar mProgressBar= (ProgressBar) findViewById(R.id.loading_spinner);
-        mProgressBar.setVisibility(View.GONE);
-        mEmptyStateTextView.setText(R.string.no_internet);
-    }
+        if (isConnected) {
+            LoaderManager loaderManager = getLoaderManager();
+            loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+            Log.v("LoaderState", "initLoader launched");
+        } else {
+            ProgressBar mProgressBar = (ProgressBar) findViewById(R.id.loading_spinner);
+            mProgressBar.setVisibility(View.GONE);
+            mEmptyStateTextView.setText(R.string.no_internet);
+        }
     }
 
     @Override
     public Loader<List<Earthquake>> onCreateLoader(int id, Bundle args) {
         Log.v("LoaderState", "onCreateLoader launched");
 
-            return new EarthquakeLoader(this, USGS_REQUEST_URL);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String minMagnitude = sharedPrefs.getString(
+                getString(R.string.settings_min_magnitude_key),
+                getString(R.string.settings_min_magnitude_default));
+        Uri baseUri = Uri.parse(USGS_REQUEST_URL);
+        Uri.Builder uriBuilder = baseUri.buildUpon();
+
+        uriBuilder.appendQueryParameter("format", "geojson");
+        uriBuilder.appendQueryParameter("limit", "10");
+        uriBuilder.appendQueryParameter("minmag", minMagnitude);
+        uriBuilder.appendQueryParameter("orderby", "time");
+        return new EarthquakeLoader(this, uriBuilder.toString());
 
     }
 
     @Override
     public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
         mEmptyStateTextView.setText(R.string.no_earthquakes);
-        ProgressBar mProgressBar= (ProgressBar) findViewById(R.id.loading_spinner);
+        ProgressBar mProgressBar = (ProgressBar) findViewById(R.id.loading_spinner);
         mProgressBar.setVisibility(View.GONE);
         adapter.clear();
         Log.v("LoaderState", "onLoadFinished launched");
@@ -118,7 +131,6 @@ public class EarthquakeActivity extends AppCompatActivity
         }
 
 
-
     }
 
     @Override
@@ -127,8 +139,22 @@ public class EarthquakeActivity extends AppCompatActivity
         adapter.clear();
 
 
-
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }
