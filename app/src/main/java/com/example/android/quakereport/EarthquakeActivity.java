@@ -49,7 +49,6 @@ public class EarthquakeActivity extends AppCompatActivity
 
     private TextView mEmptyStateTextView;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -176,7 +175,7 @@ public class EarthquakeActivity extends AppCompatActivity
         if (key.equals(getString(R.string.settings_min_magnitude_key)) ||
                 key.equals(getString(R.string.settings_order_by_key))){
             // Clear the ListView as a new query will be kicked off
-           adapter.clear();
+            adapter.clear();
             adapter.notifyDataSetChanged();
 
             // Hide the empty state text view as the loading indicator will be displayed
@@ -190,4 +189,7 @@ public class EarthquakeActivity extends AppCompatActivity
             getLoaderManager().restartLoader(EARTHQUAKE_LOADER_ID, null, this);
         }
     }
+
 }
+
+
